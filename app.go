@@ -49,6 +49,7 @@ func main() {
 		Option {"sample(sample.xlsx)", "sample"},
 	}
 
+	log.Print("web server is listening at 0.0.0.0:5001...")
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/upload", uploadHandler)
 	http.ListenAndServe(":5001", nil)

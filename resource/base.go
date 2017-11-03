@@ -52,7 +52,6 @@ func (r resource) ImportData(db *gorm.DB, xlsxName string) {
 		} else if line >= r.contentIndex {
 			var m model.SampleModel
 			query := db.Where(fmt.Sprintf("%s = ?", r.uniqueKey), row[uIndex])
-			fmt.Println(query)
 			if !query.RecordNotFound() {
 				query.First(&m)
 			}
