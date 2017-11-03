@@ -6,6 +6,7 @@ package resource
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"strconv"
@@ -29,11 +30,11 @@ func New(sheetName string, uniqueKey string, headerIndex int, contentIndex int) 
 func (r resource) ImportData(db *gorm.DB, xlsxName string) {
 	xlsx, err := excelize.OpenFile(xlsxName)
 	if err != nil {
-		panic(err)
+		log.Print("read excel file err: ", err)
 	}
 	rows := xlsx.GetRows(r.sheetName)
 	if len(rows) == 0 {
-		panic(fmt.Sprintf("Sheet %s not found", r.sheetName))
+		log.Print("sheet found err: ", r.sheetName)
 	}
 	var uHeaders []string
 	var uIndex = -1
@@ -46,29 +47,30 @@ func (r resource) ImportData(db *gorm.DB, xlsxName string) {
 				}
 			}
 			if uIndex == -1 {
-				panic(fmt.Sprintf("unique key %s not defined", r.uniqueKey))
+				log.Print("unique key defined err: ", r.uniqueKey)
 			}
-		}else if line >= r.contentIndex {
+		} else if line >= r.contentIndex {
 			var m model.SampleModel
 			query := db.Where(fmt.Sprintf("%s = ?", r.uniqueKey), row[uIndex])
-			if query.RecordNotFound() == false {
+			fmt.Println(query)
+			if !query.RecordNotFound() {
 				query.First(&m)
 			}
 			elems := reflect.ValueOf(&m).Elem()
 			for k := range row {
 				header := strings.Title(uHeaders[k])
 				field := elems.FieldByName(header)
-				if field.IsValid() == false {
-					panic(fmt.Sprintf("Field %s not valid", header))
+				if !field.IsValid() {
+					log.Print("field parse err: ", header)
 				}
 				// parse int
 				if field.Kind() == reflect.Int {
 					n, err := strconv.ParseInt(row[k], 10, 64)
 					if err != nil {
-						panic(err)
+						log.Print("integer convert err: ", err)
 					}
 					field.SetInt(n)
-				}else {           // string
+				} else {           // string
 					field.SetString(row[k])
 				}
 			}
