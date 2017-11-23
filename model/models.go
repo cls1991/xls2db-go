@@ -1,15 +1,15 @@
 /*
-    mysql data table model, mapping with xls sheet.
+   mysql data table model, mapping with xls sheet.
 */
 
 package model
 
 type SampleModel struct {
-    Sid int `gorm:"primary_key"`
-    Shortcut string
-    Content string
+	Sid      int `gorm:"primary_key"`
+	Shortcut string
+	Content  string
 }
 
 func (SampleModel) TableName() string {
-    return "tb_sample_template"
+	return "tb_sample_template"
 }

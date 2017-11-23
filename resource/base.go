@@ -6,24 +6,24 @@ package resource
 
 import (
 	"fmt"
-	"log"
-	"reflect"
-	"strings"
-	"strconv"
+	"github.com/cls1991/xls2db-go/model"
 	"github.com/jinzhu/gorm"
 	"github.com/xuri/excelize"
-	"github.com/cls1991/xls2db-go/model"
+	"log"
+	"reflect"
+	"strconv"
+	"strings"
 )
 
 type resource struct {
-	sheetName string
-	uniqueKey string
-	headerIndex int
+	sheetName    string
+	uniqueKey    string
+	headerIndex  int
 	contentIndex int
 }
 
 func New(sheetName string, uniqueKey string, headerIndex int, contentIndex int) resource {
-	r := resource {sheetName, uniqueKey, headerIndex, contentIndex}
+	r := resource{sheetName, uniqueKey, headerIndex, contentIndex}
 	return r
 }
 
@@ -69,7 +69,7 @@ func (r resource) ImportData(db *gorm.DB, xlsxName string) {
 						log.Print("integer convert err: ", err)
 					}
 					field.SetInt(n)
-				} else {           // string
+				} else { // string
 					field.SetString(row[k])
 				}
 			}

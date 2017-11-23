@@ -6,23 +6,23 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"github.com/cls1991/xls2db-go/resource"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
-	"html/template"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/cls1991/xls2db-go/resource"
+	"os"
 )
 
 type Option struct {
-	Name string
+	Name  string
 	Value string
 }
 
 type PageVariables struct {
-	Status string
+	Status  string
 	Options []Option
 	Message string
 }
@@ -33,20 +33,20 @@ var db *gorm.DB
 func main() {
 	user, passwd, database := "root", "flyfishdb", "xls2db"
 	var err error
-    db, err = gorm.Open(
-        "mysql", 
-        fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", user, passwd, database),
-    )
-    if err != nil {
+	db, err = gorm.Open(
+		"mysql",
+		fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", user, passwd, database),
+	)
+	if err != nil {
 		log.Print("connect to mysql err: ", err)
-    }
-    defer db.Close()
-    // debug mode
+	}
+	defer db.Close()
+	// debug mode
 	db.LogMode(true)
 
 	// init data source mappings
-	options = []Option {
-		Option {"sample(sample.xlsx)", "sample"},
+	options = []Option{
+		Option{"sample(sample.xlsx)", "sample"},
 	}
 
 	log.Print("web server is listening at 0.0.0.0:5001...")
@@ -67,7 +67,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	MyPageVariables := PageVariables {
+	MyPageVariables := PageVariables{
 		Options: options,
 	}
 	renderTemplate(w, "index.tmpl", MyPageVariables)
@@ -105,8 +105,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			r.ImportData(db, filePath)
 		}
 
-		MyPageVariables := PageVariables {
-			Status: "成功",
+		MyPageVariables := PageVariables{
+			Status:  "success",
 			Options: options,
 		}
 		renderTemplate(w, "index.tmpl", MyPageVariables)
