@@ -22,19 +22,19 @@ type resource struct {
 	contentIndex int
 }
 
-func New(sheetName string, uniqueKey string, headerIndex int, contentIndex int) resource {
+func New(sheetName string, uniqueKey string, headerIndex int, contentIndex int) *resource {
 	r := resource{sheetName, uniqueKey, headerIndex, contentIndex}
-	return r
+	return &r
 }
 
-func (r resource) ImportData(db *gorm.DB, xlsxName string) {
+func (r *resource) ImportData(db *gorm.DB, xlsxName string) {
 	xlsx, err := excelize.OpenFile(xlsxName)
 	if err != nil {
-		log.Print("read excel file err: ", err)
+		log.Fatal("read excel file err:", err)
 	}
 	rows := xlsx.GetRows(r.sheetName)
 	if len(rows) == 0 {
-		log.Print("sheet found err: ", r.sheetName)
+		log.Fatal("sheet found err:", r.sheetName)
 	}
 	var uHeaders []string
 	var uIndex = -1
@@ -47,33 +47,35 @@ func (r resource) ImportData(db *gorm.DB, xlsxName string) {
 				}
 			}
 			if uIndex == -1 {
-				log.Print("unique key defined err: ", r.uniqueKey)
+				log.Fatal("unique key defined err:", r.uniqueKey)
 			}
 		} else if line >= r.contentIndex {
 			var m model.SampleModel
-			query := db.Where(fmt.Sprintf("%s = ?", r.uniqueKey), row[uIndex])
-			if !query.RecordNotFound() {
-				query.First(&m)
-			}
 			elems := reflect.ValueOf(&m).Elem()
 			for k := range row {
 				header := strings.Title(uHeaders[k])
 				field := elems.FieldByName(header)
 				if !field.IsValid() {
-					log.Print("field parse err: ", header)
+					log.Fatal("field parse err:", header)
 				}
 				// parse int
 				if field.Kind() == reflect.Int {
 					n, err := strconv.ParseInt(row[k], 10, 64)
 					if err != nil {
-						log.Print("integer convert err: ", err)
+						log.Fatal("integer convert err:", err)
 					}
 					field.SetInt(n)
 				} else { // string
 					field.SetString(row[k])
 				}
 			}
-			db.Save(&m)
+			// insert or update record
+			exist := !db.Where(fmt.Sprintf("%s = ?", r.uniqueKey), row[uIndex]).First(&m).RecordNotFound()
+			if exist {
+				db.Save(&m)
+			} else {
+				db.Create(&m)
+			}
 		}
 	}
 }

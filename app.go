@@ -38,7 +38,7 @@ func main() {
 		fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", user, passwd, database),
 	)
 	if err != nil {
-		log.Print("connect to mysql err: ", err)
+		log.Print("connect to mysql err:", err)
 	}
 	defer db.Close()
 	// debug mode
@@ -59,10 +59,10 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	tmpl = fmt.Sprintf("template/%s", tmpl)
 	t, err := template.ParseFiles(tmpl)
 	if err != nil {
-		log.Print("template parsing error: ", err)
+		log.Print("template parsing error:", err)
 	}
 	if err := t.Execute(w, data); err != nil {
-		log.Print("template executing error: ", err)
+		log.Print("template executing error:", err)
 	}
 }
 
@@ -79,30 +79,31 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "POST" {
 		file, handler, err := r.FormFile("file")
 		if err != nil {
-			log.Print("get form file err: ", err)
+			log.Fatal("get form file err:", err)
 		}
 		defer file.Close()
 		dirName := "tmp/"
 		if _, err := os.Stat(dirName); os.IsNotExist(err) {
 			err = os.Mkdir(dirName, 0755)
 			if err != nil {
-				log.Print("create directory err: ", err)
+				log.Fatal("create directory err: ", err)
 			}
 		}
 		filePath := dirName + handler.Filename
 		f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			log.Print("write file err: ", err)
+			log.Fatal("write file err:", err)
 		}
 		defer f.Close()
 		io.Copy(f, file)
-		log.Print(filePath)
 		model := r.FormValue("model")
-		// @TODO: auto mapping with resource
-		// is ugly and dirty
-		if model == "sample" {
-			r := resource.New("sample", "sid", 0, 2)
+		// import model data
+		switch model {
+		case "sample":
+			r := resource.New("Sheet1", "sid", 0, 2)
 			r.ImportData(db, filePath)
+		default:
+			log.Fatal("model detect error:", model)
 		}
 
 		MyPageVariables := PageVariables{
@@ -111,6 +112,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		renderTemplate(w, "index.tmpl", MyPageVariables)
 	} else {
-		log.Print("unknown http method: ", r.Method)
+		log.Fatal("unknown http method:", r.Method)
 	}
 }
